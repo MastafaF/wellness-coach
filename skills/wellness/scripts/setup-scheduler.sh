@@ -1,57 +1,148 @@
 #!/usr/bin/env bash
-# setup-scheduler.sh — One-time setup for Wellness Coach cross-session notifications
+# setup-scheduler.sh — Manage Wellness Coach cross-session notifications
 #
-# Registers a Windows Task Scheduler task that fires every 60 minutes
-# and shows a toast notification even when no terminal is open.
-#
-# Run once: bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh
-# Remove:   schtasks /Delete /TN WellnessCoach /F
+# Usage:
+#   bash setup-scheduler.sh           → same as 'enable'
+#   bash setup-scheduler.sh enable    → create/re-enable the scheduled task
+#   bash setup-scheduler.sh disable   → pause notifications (task kept, not deleted)
+#   bash setup-scheduler.sh delete    → remove the scheduled task entirely
+#   bash setup-scheduler.sh status    → show current state
 
 set -euo pipefail
 
 TASK_NAME="WellnessCoach"
-PS1_SCRIPT="$USERPROFILE\\.claude\\skills\\wellness-coach\\scripts\\notify.ps1"
+CMD="${1:-enable}"
+
+# ── Derive Windows-style home path ───────────────────────────────────────────
+if command -v cygpath &>/dev/null; then
+  WIN_HOME=$(cygpath -w "$HOME")
+else
+  WIN_HOME=$(echo "$HOME" | sed 's|^/\([a-zA-Z]\)/|\1:\\|; s|/|\\|g')
+fi
+PS1_SCRIPT="${WIN_HOME}\\.claude\\skills\\wellness-coach\\scripts\\notify.ps1"
 
 echo ""
-echo "  Wellness Coach — Cross-Session Notification Setup"
-echo "  ─────────────────────────────────────────────────"
+echo "  Wellness Coach — Notification Manager"
+echo "  ──────────────────────────────────────"
 echo ""
 
-# ── Check we're on Windows ───────────────────────────────────────────────────
+# ── Windows check ────────────────────────────────────────────────────────────
 if ! command -v schtasks &>/dev/null; then
-  echo "  ERROR: schtasks not found. This script requires Windows."
-  echo "  Layer 1 (terminal startup tip) still works via ~/.bashrc."
+  echo "  ERROR: schtasks not found. This script requires Windows (Git Bash / MSYS2)."
   exit 1
 fi
 
-# ── Register the scheduled task ─────────────────────────────────────────────
-echo "  Registering Task Scheduler task: $TASK_NAME"
-echo "  Interval: every 60 minutes"
-echo ""
+# ── Helper: check if task exists ─────────────────────────────────────────────
+task_exists() {
+  schtasks /Query /TN "$TASK_NAME" &>/dev/null
+}
 
-schtasks /Create \
-  /SC MINUTE \
-  /MO 60 \
-  /TN "$TASK_NAME" \
-  /TR "powershell -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \"$PS1_SCRIPT\"" \
-  /F \
-  2>&1
+# ── Helper: get task status ───────────────────────────────────────────────────
+task_status() {
+  if task_exists; then
+    local info
+    info=$(schtasks /Query /TN "$TASK_NAME" /FO LIST 2>/dev/null)
+    if echo "$info" | grep -qi "disabled"; then
+      echo "disabled"
+    else
+      echo "enabled"
+    fi
+  else
+    echo "not installed"
+  fi
+}
 
-echo ""
-echo "  Done! Task '$TASK_NAME' created."
-echo ""
-echo "  What happens now:"
-echo "  - Every 60 minutes, a toast notification will appear"
-echo "  - The 60-min interval is shared with terminal startup tips"
-echo "    (you'll never get two notifications within an hour)"
-echo ""
-echo "  ── Layer 1: Terminal startup tip ────────────────────────"
-echo "  Add this line to ~/.bashrc to also get a tip on each new terminal:"
-echo ""
-echo "    bash ~/.claude/skills/wellness-coach/scripts/notify.sh 2>/dev/null"
-echo ""
-echo "  ── Manage the scheduled task ────────────────────────────"
-echo "  View:    schtasks /Query /TN $TASK_NAME"
-echo "  Disable: schtasks /Change /TN $TASK_NAME /DISABLE"
-echo "  Remove:  schtasks /Delete /TN $TASK_NAME /F"
+# ── Commands ─────────────────────────────────────────────────────────────────
+case "$CMD" in
+
+  enable)
+    echo "  Action: enable toast notifications"
+    echo ""
+    if task_exists; then
+      schtasks /Change /TN "$TASK_NAME" /ENABLE 2>&1
+      echo "  Task '$TASK_NAME' re-enabled — toasts will fire every 60 minutes."
+    else
+      schtasks /Create \
+        /SC MINUTE /MO 60 \
+        /TN "$TASK_NAME" \
+        /TR "powershell -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \"$PS1_SCRIPT\"" \
+        /F 2>&1
+      echo "  Task '$TASK_NAME' created — toasts will fire every 60 minutes."
+    fi
+    echo ""
+    echo "  To manage later:"
+    echo "    bash setup-scheduler.sh status   → check current state"
+    echo "    bash setup-scheduler.sh disable  → pause without deleting"
+    echo "    bash setup-scheduler.sh delete   → remove entirely"
+    ;;
+
+  disable)
+    echo "  Action: disable toast notifications (task preserved)"
+    echo ""
+    if ! task_exists; then
+      echo "  Nothing to disable — task '$TASK_NAME' is not installed."
+      echo "  Run 'bash setup-scheduler.sh enable' to set it up."
+    else
+      schtasks /Change /TN "$TASK_NAME" /DISABLE 2>&1
+      echo "  Task '$TASK_NAME' disabled. No more toasts until you re-enable."
+      echo ""
+      echo "  To re-enable:  bash setup-scheduler.sh enable"
+      echo "  To delete:     bash setup-scheduler.sh delete"
+    fi
+    ;;
+
+  delete)
+    echo "  Action: delete scheduled task entirely"
+    echo ""
+    if ! task_exists; then
+      echo "  Nothing to delete — task '$TASK_NAME' is not installed."
+    else
+      schtasks /Delete /TN "$TASK_NAME" /F 2>&1
+      echo "  Task '$TASK_NAME' deleted. Toast notifications are fully removed."
+      echo ""
+      echo "  Layer 1 (terminal startup tips via ~/.bashrc) is unaffected."
+      echo "  To disable that too, remove or comment out this line in ~/.bashrc:"
+      echo "    bash ~/.claude/skills/wellness-coach/scripts/notify.sh 2>/dev/null"
+    fi
+    ;;
+
+  status)
+    echo "  Scheduled task status"
+    echo ""
+    state=$(task_status)
+    case "$state" in
+      enabled)
+        echo "  [ON]  Task '$TASK_NAME' is active — toasts fire every 60 minutes."
+        ;;
+      disabled)
+        echo "  [OFF] Task '$TASK_NAME' exists but is disabled."
+        echo "        Run 'bash setup-scheduler.sh enable' to re-enable."
+        ;;
+      "not installed")
+        echo "  [--]  Task '$TASK_NAME' is not installed."
+        echo "        Run 'bash setup-scheduler.sh enable' to set it up."
+        ;;
+    esac
+    echo ""
+    # Layer 1 status
+    if grep -q "notify.sh" "$HOME/.bashrc" 2>/dev/null; then
+      if grep -q "^#.*notify.sh\|^[[:space:]]*#.*notify.sh" "$HOME/.bashrc" 2>/dev/null; then
+        echo "  [OFF] Layer 1 (terminal tip) is commented out in ~/.bashrc"
+      else
+        echo "  [ON]  Layer 1 (terminal tip) is active in ~/.bashrc"
+      fi
+    else
+      echo "  [--]  Layer 1 (terminal tip) is not in ~/.bashrc"
+    fi
+    ;;
+
+  *)
+    echo "  Unknown command: $CMD"
+    echo ""
+    echo "  Usage: bash setup-scheduler.sh [enable|disable|delete|status]"
+    exit 1
+    ;;
+
+esac
+
 echo ""
