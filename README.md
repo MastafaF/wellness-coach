@@ -1,25 +1,29 @@
 # wellness-coach
 
-> Stop ignoring your body while you ship. A Claude Code plugin that knows your back pain, your deadlines, and your equipment — and gives you the *right* break at the right moment.
-
----
-
-## Why this exists
-
-Generic wellness apps tell everyone the same thing. This one asks you four questions, builds a private profile, and prescribes breaks tailored to *your* goals, stress level, and physical limits. It lives inside Claude Code — where you already are.
+> Stop ignoring your body while you ship. A Claude Code skill that knows your back pain, your deadlines, and your equipment — and gives you the *right* break at the right moment.
 
 ---
 
 ## Install
 
+**One command — works on Windows, macOS, and Linux:**
+
 ```bash
-/plugin install https://github.com/MastafaF/wellness-coach.git
+git clone https://github.com/MastafaF/wellness-coach.git ~/.claude/wellness-coach-src && bash ~/.claude/wellness-coach-src/install.sh
 ```
 
-Once on the official marketplace:
-```bash
-/plugin install wellness-coach
+That's it. The installer will:
+- Copy the skill into Claude Code
+- Optionally add a terminal-startup tip to your shell
+- Optionally set up background notifications (even when Claude Code is closed)
+
+After install, open Claude Code and run:
+
 ```
+/wellness
+```
+
+You'll answer 4 quick questions and get your first personalized tip in under a minute.
 
 ---
 
@@ -34,7 +38,7 @@ Once on the official marketplace:
 | `/wellness focus focus` | Opens a video from the `focus` category (deep-work music). |
 | `/wellness log` | Show today's habit checklist and mark habits complete. |
 | `/wellness log workout` | Quick-mark a single habit done for today. |
-| `/wellness notifications` | Manage background Windows toast notifications. |
+| `/wellness notifications` | Manage background notifications (Windows toast / macOS / Linux). |
 | `/loop 1h wellness` | Auto check-ins every hour — set it and forget it. |
 
 ---
@@ -101,40 +105,57 @@ rm ~/.claude/wellness-profile.md ~/.claude/wellness-habits.md ~/.claude/wellness
 
 ---
 
-## Cross-session notifications (Windows)
+## Cross-session notifications
 
 Wellness tips can fire **even when Claude Code is closed** — while you're coding in VS Code, a browser, or any other app.
 
 There are two layers, both using a shared 60-minute interval guard so you're never double-notified:
 
-### Layer 1 — Terminal startup tip (zero config)
-Every new Git Bash / PowerShell terminal prints a tip if 60 minutes have passed since the last one. Set up in one step:
+### Layer 1 — Terminal startup tip (all platforms, zero config)
+
+Every new terminal prints a tip if 60 minutes have passed since the last one. The installer adds this automatically, or you can add it manually:
 
 ```bash
-# Appended to ~/.bashrc automatically on install, or add manually:
-bash ~/.claude/skills/wellness-coach/scripts/notify.sh 2>/dev/null
+# Add to ~/.bashrc (or ~/.zshrc on macOS):
+bash "$HOME/.claude/skills/wellness-coach/scripts/notify.sh" 2>/dev/null
 ```
 
-### Layer 2 — Windows toast notification (truly background)
-A Windows Task Scheduler task fires every 60 minutes. Run once to register it:
+### Layer 2 — Background OS notification (truly background)
+
+Fires even when no terminal is open. Run once to register:
 
 ```bash
-bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh
+bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh enable
 ```
 
-The toast includes a **"Open focus video"** button that opens your curated playlist. To remove the scheduled task:
+Platform support:
+
+| Platform | Mechanism | Requirement |
+|---|---|---|
+| **Windows** | Windows toast via Task Scheduler | Git Bash (already installed if you're here) |
+| **macOS** | System notification via `osascript` | Built-in, nothing to install |
+| **Linux** | Desktop notification via `notify-send` | `libnotify-bin` (`sudo apt install libnotify-bin`) |
+
+The notification includes an **"Open focus video"** button that opens a random video from your curated playlist.
+
+To check status or remove:
 
 ```bash
-schtasks /Delete /TN WellnessCoach /F
+bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh status
+bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh disable   # pause
+bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh delete    # remove entirely
 ```
 
 ### Configuring the interval
+
 Both layers respect the `WELLNESS_INTERVAL` env var (minutes, default `60`):
+
 ```bash
 export WELLNESS_INTERVAL=45  # tips every 45 minutes
 ```
 
-### Tips file
+### Tips library
+
 Tips live in `scripts/tips.md` — 19 curated tips across 5 categories matched to your profile:
 - **breathing** (4 tips) — highest priority
 - **stretch-home** (4 tips) — yoga mat exercises
@@ -165,11 +186,31 @@ Then use `/wellness focus breathing` or `/wellness focus focus` to open a video 
 
 ---
 
+## Uninstall
+
+```bash
+# Remove skill files
+rm -rf ~/.claude/skills/wellness-coach ~/.claude/skills/wellness
+
+# Remove wellness data (optional)
+rm -f ~/.claude/wellness-profile.md ~/.claude/wellness-habits.md ~/.claude/wellness-weekly.md
+
+# Remove background notifications
+bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh delete  # Windows / scheduled
+# Then remove the notify.sh line from ~/.bashrc or ~/.zshrc
+
+# Remove source clone
+rm -rf ~/.claude/wellness-coach-src
+```
+
+---
+
 ## Value props
 
 - **Personalized, not generic** — knows your back pain, equipment, and stress level
 - **Habit tracking built in** — daily log + weekly review, all local
 - **Privacy-first** — all data at `~/.claude/`, nothing sent anywhere
+- **Cross-platform** — Windows, macOS, Linux
 - **One-command automation** — `/loop 1h wellness` is a complete workflow in one line
 
 ---
