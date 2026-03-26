@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Claude Code session artifacts
+.claude/
+
+# Editor
+.vscode/
+.idea/
+
+# Local profile — never commit personal wellness data
+wellness-profile.md
+~/.claude/wellness-profile.md
