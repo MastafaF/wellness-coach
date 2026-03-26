@@ -1,6 +1,6 @@
 # notify.ps1 — Wellness Coach Layer 2: Windows toast notification
 # Called by Task Scheduler every 60 minutes.
-# Runs notify.sh to check interval + pick a tip, then shows a Windows toast.
+# Runs notify.sh --toast-only to check interval + pick a tip, then shows a Windows toast.
 
 # ── 1. Find bash executable ──────────────────────────────────────────────────
 $bashCandidates = @(
@@ -26,36 +26,41 @@ if (-not $bash) {
   exit 1  # No bash found — silent failure
 }
 
-# ── 2. Run notify.sh and capture output ──────────────────────────────────────
+# ── 2. Run notify.sh --toast-only and capture tip output ─────────────────────
 $notifyScript = "$env:USERPROFILE\.claude\skills\wellness-coach\scripts\notify.sh"
 # Convert Windows path to Unix path for bash
 $unixScript = $notifyScript -replace '\\', '/' -replace '^([A-Za-z]):', { '/' + $args[0].Groups[1].Value.ToLower() }
 
 try {
-  $tipOutput = & $bash -c "bash '$unixScript' 2>/dev/null"
+  $tipOutput = & $bash -c "bash '$unixScript' --toast-only 2>/dev/null"
 } catch {
   exit 1
 }
 
-# Exit if no output (interval guard fired or no tips)
+# Exit if no output (interval guard fired or no tips available)
 if ([string]::IsNullOrWhiteSpace($tipOutput)) {
   exit 0
 }
 
-# Clean up the tip: strip box-drawing characters and leading spaces for toast
-$tipLines = $tipOutput -split "`n" | Where-Object {
-  $_ -notmatch '╭|╰|╮|╯|│.*Wellness check-in' -and $_.Trim() -ne ''
-}
-$tipText = ($tipLines | ForEach-Object { $_.Trim() }) -join ' '
-$tipText = $tipText.Trim()
+$tipText = $tipOutput.Trim()
 
 if ([string]::IsNullOrWhiteSpace($tipText)) {
   exit 0
 }
 
-# ── 3. Show Windows 11 toast notification ────────────────────────────────────
-$focusVideo = "https://www.youtube.com/watch?v=bSkzWpcWz-o"
+# ── 3. Pick a focus video URL dynamically from focus-videos.md ───────────────
+$focusVideosFile = "$env:USERPROFILE\.claude\skills\wellness-coach\focus-videos.md"
+$focusUrl = "https://www.youtube.com/watch?v=bSkzWpcWz-o"  # fallback
 
+if (Test-Path $focusVideosFile) {
+  $lines = Get-Content $focusVideosFile
+  $urls = $lines | Where-Object { $_ -match "^https?://" }
+  if ($urls.Count -gt 0) {
+    $focusUrl = $urls[(Get-Random -Maximum $urls.Count)]
+  }
+}
+
+# ── 4. Show Windows 11 toast notification ────────────────────────────────────
 # Load Windows Runtime assemblies
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
@@ -70,7 +75,7 @@ $toastXml = @"
     </binding>
   </visual>
   <actions>
-    <action content="Open focus video" arguments="$focusVideo" activationType="protocol"/>
+    <action content="Open focus video" arguments="$focusUrl" activationType="protocol"/>
     <action content="Dismiss" arguments="dismiss" activationType="system"/>
   </actions>
 </toast>

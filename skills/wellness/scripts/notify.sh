@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # notify.sh — Wellness Coach cross-session notification core
-# Shared by both Layer 1 (terminal startup) and Layer 2 (Task Scheduler toast)
+# Shared by both Layer 1 (terminal startup) and Layer 2 (OS background toast)
 #
-# Usage: bash notify.sh
+# Usage: bash notify.sh [--toast-only]
+#   --toast-only  Skip terminal print; only fire the OS toast (used by schedulers)
 # Env vars:
 #   WELLNESS_INTERVAL  — minutes between notifications (default: 60)
 
@@ -11,7 +12,10 @@ set -euo pipefail
 PROFILE="$HOME/.claude/wellness-profile.md"
 TIMESTAMP="$HOME/.claude/wellness-last-check"
 TIPS="$HOME/.claude/skills/wellness-coach/scripts/tips.md"
+FOCUS_VIDEOS="$HOME/.claude/skills/wellness-coach/focus-videos.md"
 INTERVAL="${WELLNESS_INTERVAL:-60}"
+TOAST_ONLY=false
+[[ "${1:-}" == "--toast-only" ]] && TOAST_ONLY=true
 
 # ── 1. Interval guard ────────────────────────────────────────────────────────
 if [[ -f "$TIMESTAMP" ]]; then
@@ -69,16 +73,53 @@ raw_tip="${candidates[$tip_index]}"
 # Strip the [category] prefix
 tip_text="${raw_tip#\[*\] }"
 
-# ── 5. Print formatted tip ───────────────────────────────────────────────────
-echo ""
-echo "  ╭──────────────────────────────────────────────────────╮"
-echo "  │  Wellness check-in                                   │"
-echo "  ╰──────────────────────────────────────────────────────╯"
-# Word-wrap tip to ~54 chars for the box
-echo "$tip_text" | fold -s -w 54 | while IFS= read -r line; do
-  printf "  %s\n" "$line"
-done
-echo ""
+# ── 5. Pick a focus video URL ────────────────────────────────────────────────
+focus_url=""
+if [[ -f "$FOCUS_VIDEOS" ]]; then
+  mapfile -t all_urls < <(grep -E "^https?://" "$FOCUS_VIDEOS" 2>/dev/null || true)
+  if [[ ${#all_urls[@]} -gt 0 ]]; then
+    url_index=$(( RANDOM % ${#all_urls[@]} ))
+    focus_url="${all_urls[$url_index]}"
+  fi
+fi
 
-# ── 6. Update timestamp ──────────────────────────────────────────────────────
+# ── 6. Print formatted tip to terminal ───────────────────────────────────────
+if [[ "$TOAST_ONLY" == false ]]; then
+  echo ""
+  echo "  ╭──────────────────────────────────────────────────────╮"
+  echo "  │  Wellness check-in                                   │"
+  echo "  ╰──────────────────────────────────────────────────────╯"
+  # Word-wrap tip to ~54 chars for the box
+  echo "$tip_text" | fold -s -w 54 | while IFS= read -r line; do
+    printf "  %s\n" "$line"
+  done
+  echo ""
+fi
+
+# ── 7. OS toast notification (background schedulers) ────────────────────────
+OS="$(uname -s 2>/dev/null || echo unknown)"
+
+case "$OS" in
+  Darwin)
+    # macOS — use osascript (built-in, no install required)
+    osa_msg=$(echo "$tip_text" | sed "s/'/\\\\'/" | cut -c1-200)
+    osascript -e "display notification \"${osa_msg}\" with title \"Wellness check-in\"" 2>/dev/null || true
+    # If a focus URL is available, offer it via a second notification
+    if [[ -n "$focus_url" ]]; then
+      osascript -e "display notification \"Open focus video: ${focus_url}\" with title \"Wellness — focus video\"" 2>/dev/null || true
+    fi
+    ;;
+  Linux)
+    # Linux — use notify-send if available
+    if command -v notify-send &>/dev/null; then
+      notify-send "Wellness check-in" "$tip_text" --icon=dialog-information --urgency=low 2>/dev/null || true
+    fi
+    ;;
+  MINGW*|CYGWIN*|MSYS*)
+    # Windows/Git Bash — toast is handled by notify.ps1 (Task Scheduler layer)
+    # Terminal print above is sufficient for Layer 1 (bashrc startup)
+    ;;
+esac
+
+# ── 8. Update timestamp ──────────────────────────────────────────────────────
 touch "$TIMESTAMP"
