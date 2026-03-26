@@ -1,8 +1,11 @@
 {
   "name": "wellness-coach",
+  "version": "1.1.0",
   "description": "Your personal coding and wellness coach. Get tailored break suggestions, stretches, and mental resets timed to your work goals and physical needs.",
   "author": {
     "name": "MastafaF",
     "url": "https://github.com/MastafaF"
-  }
+  },
+  "homepage": "https://github.com/MastafaF/wellness-coach",
+  "tags": ["wellness", "productivity", "health", "breaks", "stretching", "mindfulness", "notifications", "habit-tracking"]
 }

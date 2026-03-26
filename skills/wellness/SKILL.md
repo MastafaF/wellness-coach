@@ -99,8 +99,14 @@ If `day_of_week` == 1 (Monday):
 1. Read `~/.claude/wellness-habits.md`. If missing → skip summary entirely.
 2. Compute last week's date range:
    ```bash
-   LAST_MON=$(date -d 'last monday' +%Y-%m-%d)
-   LAST_SUN=$(date -d 'last sunday' +%Y-%m-%d)
+   # Cross-platform: works on GNU date (Linux) and BSD date (macOS)
+   if date -d 'last monday' +%Y-%m-%d 2>/dev/null; then
+     LAST_MON=$(date -d 'last monday' +%Y-%m-%d)
+     LAST_SUN=$(date -d 'last sunday' +%Y-%m-%d)
+   else
+     LAST_MON=$(date -v-mon +%Y-%m-%d 2>/dev/null || date -v-7d +%Y-%m-%d)
+     LAST_SUN=$(date -v-sun +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
+   fi
    echo "$LAST_MON $LAST_SUN"
    ```
 3. Parse all `### YYYY-MM-DD` sections in `## Log` whose date falls within [LAST_MON, LAST_SUN].
