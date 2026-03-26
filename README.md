@@ -77,7 +77,9 @@ Habit data is stored locally at `~/.claude/wellness-habits.md` — never in the 
 
 ### Auto focus videos on slow builds
 
-Install the optional hook (included in `settings.json.example`) and whenever you run a slow command like `npm install` or `cargo build`, a focus video automatically opens in your browser so you don't just stare at the terminal.
+> **Not installed by default.** This hook opens a focus video automatically during slow commands — which may be intrusive. Use `/wellness focus` instead for on-demand video opening.
+
+If you still want it, add the hook from `settings.json.example` to your `~/.claude/settings.json` manually. It triggers on commands like `npm install` or `cargo build` and opens a random focus video in your browser.
 
 ---
 
