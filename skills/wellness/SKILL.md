@@ -1,6 +1,6 @@
 ---
 name: wellness
-description: Your personal coding and wellness coach. Run to get a tailored break suggestion, or use `/wellness update` to change your profile, `/wellness focus` to open a focus video, or `/wellness notifications` to manage background notifications.
+description: Your personal coding and wellness coach. Run to get a tailored break suggestion, or use `/wellness update` to change your profile, `/wellness focus` to open a focus video, `/wellness log` to track daily habits, or `/wellness notifications` to manage background notifications.
 allowed-tools: Read, Write, Bash
 ---
 
@@ -17,14 +17,54 @@ If `$ARGUMENTS` contains the word "notifications":
 
 ## Step 0b: Handle Focus Subcommand
 If `$ARGUMENTS` contains the word "focus":
-1. Use your Read tool to read `~/.claude/skills/wellness-coach/focus-videos.md`
-2. Parse the lines to get a list of URLs (skip blank lines and lines starting with `#`)
-3. Pick a random URL from the list
-4. Detect the OS by running `uname -s` with Bash:
+
+1. Read `~/.claude/skills/wellness-coach/focus-videos.md`.
+2. Parse: skip `#` lines and blanks. A line matching `[word]` (square-bracket label) sets the current category.
+   URLs are assigned to the current category (or "uncategorized" if no header seen yet).
+3. Extract optional category: strip "focus" from `$ARGUMENTS`, trim → remainder is the category arg.
+4. Select pool:
+   - No category arg → combine all URLs from all categories + uncategorized. Pick one at random.
+   - Category given → look up case-insensitively. If found and non-empty → pick one at random from it.
+     If not found → tell the user, list available categories (e.g. "breathing", "focus", "uncategorized"). Stop.
+5. Detect the OS by running `uname -s` with Bash:
    - If output contains "MINGW", "CYGWIN", or "MSYS" (Windows/Git Bash): run `start "" "<URL>"`
    - If output is "Darwin" (macOS): run `open "<URL>"`
    - Otherwise (Linux): run `xdg-open "<URL>"`
-5. Tell the user which video you opened. Stop here — do not proceed to other steps.
+6. Tell the user which video you opened and its category. Stop here — do not proceed to other steps.
+
+## Step 0c: Handle Log Subcommand
+If `$ARGUMENTS` contains the word "log":
+
+1. Run `date +%Y-%m-%d` → TODAY.
+   Read `~/.claude/wellness-habits.md`. If the file is missing, create it with this exact content:
+   ```
+   # Wellness Habits Log
+
+   ## Habits
+
+   - workout
+   - vitamins
+
+   ## Log
+   ```
+
+2. Parse the `## Habits` section — each `- habitname` line is a tracked habit.
+
+3. Quick-log shortcut: if `$ARGUMENTS` has a word beyond "log" (e.g. "log workout"),
+   treat that extra word as the habit to mark done:
+   - Find or create today's `### TODAY` section in `## Log` (add all habits as `- [ ]` if the section is new).
+   - Set the matching habit line to `- [x]`. Write the file.
+   - Reply: "Marked **habitname** done for TODAY. Run `/wellness log` to see your full checklist."
+   - Stop.
+
+4. Full checklist: find or create today's `### TODAY` section in `## Log` (add all habits as `- [ ]` if new). Display it.
+   Ask: "Which habits did you complete? Reply with names (e.g. 'workout vitamins'), 'all', or 'none'."
+
+5. Wait for the user's reply, then process it:
+   - "none" → no changes, acknowledge.
+   - "all" → set all habits in today's section to `[x]`.
+   - names → set matching habits to `[x]`, leave others unchanged.
+   Write the file. Show the final checklist + a brief motivational note. Stop.
 
 ## Step 1: Interval Guard (coaching session only)
 Before checking the profile, run this to check time since last tip:
@@ -42,7 +82,49 @@ If the result is less than 60, respond with exactly:
 
 (Replace X with the elapsed minutes, Y with 60 minus elapsed.) Then **stop** — do not proceed further.
 
-If the result is 60 or more, continue to Step 2.
+If the result is 60 or more, continue.
+
+After elapsed >= 60 confirmed, run:
+```bash
+day_of_week=$(date +%u)
+current_week=$(date +%G-W%V)
+echo "DOW=$day_of_week WEEK=$current_week"
+```
+
+If `day_of_week` == 1 (Monday):
+  - Read `~/.claude/wellness-weekly.md`. If the file is missing OR `last-summary-week` does not equal `current_week` → generate the weekly summary below, then write `current_week` to the file as `last-summary-week: <current_week>`.
+  - If `last-summary-week` already matches `current_week` → skip (summary already shown this week).
+
+**Generating the weekly summary:**
+1. Read `~/.claude/wellness-habits.md`. If missing → skip summary entirely.
+2. Compute last week's date range:
+   ```bash
+   LAST_MON=$(date -d 'last monday' +%Y-%m-%d)
+   LAST_SUN=$(date -d 'last sunday' +%Y-%m-%d)
+   echo "$LAST_MON $LAST_SUN"
+   ```
+3. Parse all `### YYYY-MM-DD` sections in `## Log` whose date falls within [LAST_MON, LAST_SUN].
+   If no entries exist for that range → display "No habit data for last week yet — first full week starts today." and skip the table.
+4. For each habit: count days with `[x]` (out of 7).
+5. Most consistent = highest count. Lowest count = habit to improve.
+6. Display before the coaching tip:
+
+---
+**Weekly Habit Review — Week of LAST_MON**
+
+| Habit    | Days completed |
+|----------|---------------|
+| workout  | 5/7           |
+| vitamins | 3/7           |
+
+Most consistent: **workout** — great streak, keep it going.
+One to improve: **vitamins** — aim for 5+ days this week.
+
+_Small anchor: attach vitamins to an existing morning habit._
+
+---
+
+Then continue to Step 2 as normal.
 
 ## Step 2: Check Profile Status
 First, use your tools to check if the file `~/.claude/wellness-profile.md` exists.
@@ -103,10 +185,15 @@ Wait for the user to reply with their selections. Then interpret each number bac
 ## Step 4: Handle Updates
 If `$ARGUMENTS` contains the word "update", ask the user what aspects of their wellness or work life have changed, wait for their reply, and overwrite `~/.claude/wellness-profile.md` with the new information.
 
+If the update request mentions habits or tracking (e.g. adding/removing tracked habits):
+  After updating `wellness-profile.md`, also update the `## Habits` section of `~/.claude/wellness-habits.md`
+  (create the file with default habits — workout, vitamins — if missing; do not touch the `## Log` section).
+  Confirm the habit list change to the user.
+
 ## Step 5: The Coaching Session (If profile EXISTS and no update requested)
 If the profile exists, read it carefully. Then, provide a highly tailored coaching intervention:
 1. **Acknowledge their work:** Give a brief, encouraging nod to their specific work goals to empower their coding session.
 2. **Suggest a break:** Prescribe ONE specific, actionable physical exercise, stretch, or mental break that directly aligns with their wellness goals, stress levels, and physical abilities.
 3. **Keep it brief:** You are interrupting their work day, so be concise, positive, and clear.
 
-Remind the user they can run `/loop 1h wellness` to have you automatically check in on them, and `/wellness focus` to open a focus video when a long build or install is running.
+Remind the user they can run `/loop 1h wellness` to have you automatically check in on them, `/wellness focus` to open a focus video, and `/wellness log` to track their daily habits.
