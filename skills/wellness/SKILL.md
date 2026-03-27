@@ -66,8 +66,13 @@ If `$ARGUMENTS` contains the word "log":
    - names → set matching habits to `[x]`, leave others unchanged.
    Write the file. Show the final checklist + a brief motivational note. Stop.
 
-## Step 1: Interval Guard (coaching session only)
-Before checking the profile, run this to check time since last tip:
+## Step 1: Check Profile Status
+First, use your tools to check if the file `~/.claude/wellness-profile.md` exists.
+
+If the profile does **not** exist → skip directly to Step 3 (onboarding). Do NOT run the interval guard.
+
+## Step 2: Interval Guard (returning users only)
+Profile exists — now check time since last tip:
 ```bash
 if [ -f "$HOME/.claude/wellness-last-check" ]; then
   last=$(stat -c %Y "$HOME/.claude/wellness-last-check" 2>/dev/null || stat -f %m "$HOME/.claude/wellness-last-check")
@@ -130,10 +135,7 @@ _Small anchor: attach vitamins to an existing morning habit._
 
 ---
 
-Then continue to Step 2 as normal.
-
-## Step 2: Check Profile Status
-First, use your tools to check if the file `~/.claude/wellness-profile.md` exists.
+Then continue to Step 4 (coaching session).
 
 ## Step 3: Handle Initialization (If profile does NOT exist)
 If the file does not exist, do NOT suggest an exercise yet.
