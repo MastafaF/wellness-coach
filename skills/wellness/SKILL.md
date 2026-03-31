@@ -72,7 +72,13 @@ First, use your tools to check if the file `~/.claude/wellness-profile.md` exist
 If the profile does **not** exist → skip directly to Step 3 (onboarding). Do NOT run the interval guard.
 
 ## Step 2: Interval Guard (returning users only)
-Profile exists — now check time since last tip:
+Profile exists — first read the configured interval:
+```bash
+source "$HOME/.claude/skills/wellness-coach/scripts/config.sh" && echo "$WELLNESS_INTERVAL"
+```
+Capture the output as INTERVAL (default: 60).
+
+Now check time since last tip:
 ```bash
 if [ -f "$HOME/.claude/wellness-last-check" ]; then
   last=$(stat -c %Y "$HOME/.claude/wellness-last-check" 2>/dev/null || stat -f %m "$HOME/.claude/wellness-last-check")
@@ -82,14 +88,14 @@ else
   echo "999"
 fi
 ```
-If the result is less than 60, respond with exactly:
+If the result is less than INTERVAL, respond with exactly:
 > "Last check-in was X minutes ago — next one in Y minutes. Use `/wellness focus` for music, or `/wellness notifications` to manage background toasts."
 
-(Replace X with the elapsed minutes, Y with 60 minus elapsed.) Then **stop** — do not proceed further.
+(Replace X with the elapsed minutes, Y with INTERVAL minus elapsed.) Then **stop** — do not proceed further.
 
-If the result is 60 or more, continue.
+If the result is INTERVAL or more, continue.
 
-After elapsed >= 60 confirmed, run:
+After elapsed >= INTERVAL confirmed, run:
 ```bash
 day_of_week=$(date +%u)
 current_week=$(date +%G-W%V)

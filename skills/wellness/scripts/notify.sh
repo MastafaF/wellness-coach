@@ -9,17 +9,15 @@
 
 set -euo pipefail
 
-PROFILE="$HOME/.claude/wellness-profile.md"
-TIMESTAMP="$HOME/.claude/wellness-last-check"
-TIPS="$HOME/.claude/skills/wellness-coach/scripts/tips.md"
-FOCUS_VIDEOS="$HOME/.claude/skills/wellness-coach/focus-videos.md"
-INTERVAL="${WELLNESS_INTERVAL:-60}"
+# Load centralized config (paths, interval, category weights, etc.)
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+INTERVAL="$WELLNESS_INTERVAL"
 TOAST_ONLY=false
 [[ "${1:-}" == "--toast-only" ]] && TOAST_ONLY=true
 
 # ── 1. Interval guard ────────────────────────────────────────────────────────
-if [[ -f "$TIMESTAMP" ]]; then
-  last_modified=$(stat -c %Y "$TIMESTAMP" 2>/dev/null || stat -f %m "$TIMESTAMP" 2>/dev/null || echo 0)
+if [[ -f "$WELLNESS_TIMESTAMP" ]]; then
+  last_modified=$(stat -c %Y "$WELLNESS_TIMESTAMP" 2>/dev/null || stat -f %m "$WELLNESS_TIMESTAMP" 2>/dev/null || echo 0)
   now=$(date +%s)
   elapsed_minutes=$(( (now - last_modified) / 60 ))
   if (( elapsed_minutes < INTERVAL )); then
@@ -28,17 +26,17 @@ if [[ -f "$TIMESTAMP" ]]; then
 fi
 
 # ── 2. Tips file must exist ──────────────────────────────────────────────────
-if [[ ! -f "$TIPS" ]]; then
+if [[ ! -f "$WELLNESS_TIPS" ]]; then
   exit 0
 fi
 
 # ── 3. Pick category based on profile keywords ──────────────────────────────
 # Default weight: breathing gets 3 slots (highest priority per profile),
 # others get 1-2 each. Uses a weighted random pick via array repetition.
-category_pool=(breathing breathing breathing stretch-home stretch-home stretch-office presence presence eyes)
+IFS=' ' read -ra category_pool <<< "$WELLNESS_CATEGORY_POOL"
 
-if [[ -f "$PROFILE" ]]; then
-  profile_text=$(tr '[:upper:]' '[:lower:]' < "$PROFILE")
+if [[ -f "$WELLNESS_PROFILE" ]]; then
+  profile_text=$(tr '[:upper:]' '[:lower:]' < "$WELLNESS_PROFILE")
   # Adjust pool based on detected keywords
   extra=()
   grep -q "breathing" <<< "$profile_text"   && extra+=(breathing breathing)
@@ -56,11 +54,11 @@ category="${category_pool[$random_index]}"
 
 # ── 4. Pick a random tip from that category ──────────────────────────────────
 # Read all lines matching [category] from tips.md
-mapfile -t candidates < <(grep -E "^\[${category}\]" "$TIPS" 2>/dev/null || true)
+mapfile -t candidates < <(grep -E "^\[${category}\]" "$WELLNESS_TIPS" 2>/dev/null || true)
 
 # Fallback: pick any tip if category had no matches
 if [[ ${#candidates[@]} -eq 0 ]]; then
-  mapfile -t candidates < <(grep -E "^\[[a-z-]+\]" "$TIPS" 2>/dev/null || true)
+  mapfile -t candidates < <(grep -E "^\[[a-z-]+\]" "$WELLNESS_TIPS" 2>/dev/null || true)
 fi
 
 if [[ ${#candidates[@]} -eq 0 ]]; then
@@ -75,8 +73,8 @@ tip_text="${raw_tip#\[*\] }"
 
 # ── 5. Pick a focus video URL ────────────────────────────────────────────────
 focus_url=""
-if [[ -f "$FOCUS_VIDEOS" ]]; then
-  mapfile -t all_urls < <(grep -E "^https?://" "$FOCUS_VIDEOS" 2>/dev/null || true)
+if [[ -f "$WELLNESS_FOCUS_VIDEOS" ]]; then
+  mapfile -t all_urls < <(grep -E "^https?://" "$WELLNESS_FOCUS_VIDEOS" 2>/dev/null || true)
   if [[ ${#all_urls[@]} -gt 0 ]]; then
     url_index=$(( RANDOM % ${#all_urls[@]} ))
     focus_url="${all_urls[$url_index]}"
@@ -122,4 +120,4 @@ case "$OS" in
 esac
 
 # ── 8. Update timestamp ──────────────────────────────────────────────────────
-touch "$TIMESTAMP"
+touch "$WELLNESS_TIMESTAMP"

@@ -49,8 +49,11 @@ if ([string]::IsNullOrWhiteSpace($tipText)) {
 }
 
 # ── 3. Pick a focus video URL dynamically from focus-videos.md ───────────────
-$focusVideosFile = "$env:USERPROFILE\.claude\skills\wellness-coach\focus-videos.md"
-$focusUrl = "https://www.youtube.com/watch?v=bSkzWpcWz-o"  # fallback
+$focusVideosFile = Join-Path (Split-Path $PSScriptRoot) "focus-videos.md"
+# Read fallback URL from config.sh, or use built-in default
+$unixInstallDir = $PSScriptRoot -replace '\\', '/' -replace '^([A-Za-z]):', { '/' + $args[0].Groups[1].Value.ToLower() }
+$focusUrl = try { & $bash -c "source '$unixInstallDir/config.sh' && echo `$WELLNESS_FALLBACK_VIDEO" 2>$null } catch { $null }
+if ([string]::IsNullOrWhiteSpace($focusUrl)) { $focusUrl = "https://www.youtube.com/watch?v=bSkzWpcWz-o" }
 
 if (Test-Path $focusVideosFile) {
   $lines = Get-Content $focusVideosFile
