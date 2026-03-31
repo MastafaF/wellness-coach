@@ -2,7 +2,7 @@
 
 ## Goal
 
-Get the first 500 active users for wellness-coach by making it discoverable where developers already hang out.
+Get the first 100 active users for wellness-coach by making it discoverable where developers already hang out.
 
 ---
 
