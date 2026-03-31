@@ -17,9 +17,12 @@ set -euo pipefail
 SILENT=false
 [[ "${1:-}" == "--silent" ]] && SILENT=true
 
-INSTALL_DIR="$HOME/.claude/skills/wellness-coach"
-SKILL_SLOT="$HOME/.claude/skills/wellness"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load centralized config for defaults (paths, interval, etc.)
+source "$SCRIPT_DIR/skills/wellness/scripts/config.sh"
+INSTALL_DIR="$WELLNESS_INSTALL_DIR"
+SKILL_SLOT="${WELLNESS_BASE}/skills/wellness"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 print_step() { echo ""; echo "  ▸ $1"; }
@@ -60,7 +63,25 @@ cp "$SCRIPT_DIR/skills/wellness/SKILL.md" "$SKILL_SLOT/SKILL.md"
 print_ok "SKILL.md installed at $SKILL_SLOT/SKILL.md"
 echo "    → You can now run /wellness inside Claude Code"
 
-# ── Step 3: Layer 1 — terminal startup tip via ~/.bashrc ──────────────────────
+# ── Step 3: Create user config stub ───────────────────────────────────────
+print_step "Configuration"
+USER_CONFIG="${WELLNESS_BASE}/wellness-config.sh"
+if [[ -f "$USER_CONFIG" ]]; then
+  print_ok "User config already exists at $USER_CONFIG"
+else
+  cat > "$USER_CONFIG" << 'CONF'
+# Wellness Coach — user overrides
+# Uncomment and edit any line to customize. Changes take effect immediately.
+#
+# WELLNESS_INTERVAL=60          # minutes between notifications
+# WELLNESS_CATEGORY_POOL="breathing breathing breathing stretch-home stretch-home stretch-office presence presence eyes"
+# WELLNESS_FALLBACK_VIDEO="https://www.youtube.com/watch?v=bSkzWpcWz-o"
+# WELLNESS_TASK_NAME="WellnessCoach"
+CONF
+  print_ok "Created $USER_CONFIG (edit to customize)"
+fi
+
+# ── Step 4: Layer 1 — terminal startup tip via ~/.bashrc ──────────────────────
 print_step "Layer 1: terminal startup tip (appended to ~/.bashrc)"
 BASHRC="$HOME/.bashrc"
 HOOK_LINE="bash \"\$HOME/.claude/skills/wellness-coach/scripts/notify.sh\" 2>/dev/null"
@@ -86,7 +107,7 @@ print_step "Layer 2: background notifications"
 case "$OS" in
   MINGW*|CYGWIN*|MSYS*)
     echo "    Platform: Windows"
-    if ask "Register Windows Task Scheduler toast (fires every 60 min, even when Claude is closed)?"; then
+    if ask "Register Windows Task Scheduler toast (fires every $WELLNESS_INTERVAL min, even when Claude is closed)?"; then
       bash "$INSTALL_DIR/scripts/setup-scheduler.sh" enable
       print_ok "Windows scheduled task registered"
     else
@@ -98,32 +119,32 @@ case "$OS" in
   Darwin)
     echo "    Platform: macOS"
     echo "    macOS notifications use osascript (built-in, no extra install needed)."
-    if ask "Set up a cron job to fire a notification every 60 minutes?"; then
-      CRON_LINE="*/60 * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null"
+    if ask "Set up a cron job to fire a notification every $WELLNESS_INTERVAL minutes?"; then
+      CRON_LINE="*/$WELLNESS_INTERVAL * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null"
       # Check if already present
       if crontab -l 2>/dev/null | grep -qF "wellness-coach/scripts/notify.sh"; then
         print_skip "Cron entry already exists"
       else
         (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-        print_ok "Cron job added (every 60 min)"
+        print_ok "Cron job added (every $WELLNESS_INTERVAL min)"
       fi
     else
       print_skip "macOS cron job"
       echo "    To enable later, run:"
-      echo "      (crontab -l 2>/dev/null; echo '*/60 * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null') | crontab -"
+      echo "      (crontab -l 2>/dev/null; echo '*/$WELLNESS_INTERVAL * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null') | crontab -"
     fi
     ;;
 
   Linux)
     echo "    Platform: Linux"
     echo "    Linux notifications use notify-send (install libnotify-bin if missing)."
-    if ask "Set up a cron job to fire a notification every 60 minutes?"; then
-      CRON_LINE="*/60 * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null"
+    if ask "Set up a cron job to fire a notification every $WELLNESS_INTERVAL minutes?"; then
+      CRON_LINE="*/$WELLNESS_INTERVAL * * * * bash \"$INSTALL_DIR/scripts/notify.sh\" --toast-only 2>/dev/null"
       if crontab -l 2>/dev/null | grep -qF "wellness-coach/scripts/notify.sh"; then
         print_skip "Cron entry already exists"
       else
         (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-        print_ok "Cron job added (every 60 min)"
+        print_ok "Cron job added (every $WELLNESS_INTERVAL min)"
       fi
     else
       print_skip "Linux cron job"

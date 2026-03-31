@@ -12,7 +12,9 @@
 
 set -euo pipefail
 
-TASK_NAME="WellnessCoach"
+# Load centralized config
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+TASK_NAME="$WELLNESS_TASK_NAME"
 CMD="${1:-enable}"
 
 # ── Derive Windows-style home path ───────────────────────────────────────────
@@ -62,14 +64,14 @@ case "$CMD" in
     echo ""
     if task_exists; then
       schtasks //Change //TN "$TASK_NAME" //ENABLE 2>&1
-      echo "  Task '$TASK_NAME' re-enabled — toasts will fire every 60 minutes."
+      echo "  Task '$TASK_NAME' re-enabled — toasts will fire every $WELLNESS_INTERVAL minutes."
     else
       schtasks //Create \
-        //SC MINUTE //MO 60 \
+        //SC MINUTE //MO "$WELLNESS_INTERVAL" \
         //TN "$TASK_NAME" \
         //TR "powershell -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \"$PS1_SCRIPT\"" \
         //F 2>&1
-      echo "  Task '$TASK_NAME' created — toasts will fire every 60 minutes."
+      echo "  Task '$TASK_NAME' created — toasts will fire every $WELLNESS_INTERVAL minutes."
     fi
     echo ""
     echo "  To manage later:"
@@ -114,7 +116,7 @@ case "$CMD" in
     state=$(task_status)
     case "$state" in
       enabled)
-        echo "  [ON]  Task '$TASK_NAME' is active — toasts fire every 60 minutes."
+        echo "  [ON]  Task '$TASK_NAME' is active — toasts fire every $WELLNESS_INTERVAL minutes."
         ;;
       disabled)
         echo "  [OFF] Task '$TASK_NAME' exists but is disabled."

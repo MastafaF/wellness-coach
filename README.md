@@ -109,11 +109,11 @@ rm ~/.claude/wellness-profile.md ~/.claude/wellness-habits.md ~/.claude/wellness
 
 Wellness tips can fire **even when Claude Code is closed** — while you're coding in VS Code, a browser, or any other app.
 
-There are two layers, both using a shared 60-minute interval guard so you're never double-notified:
+There are two layers, both using a shared interval guard (default: 60 minutes, configurable) so you're never double-notified:
 
 ### Layer 1 — Terminal startup tip (all platforms, zero config)
 
-Every new terminal prints a tip if 60 minutes have passed since the last one. The installer adds this automatically, or you can add it manually:
+Every new terminal prints a tip if the configured interval has passed since the last one. The installer adds this automatically, or you can add it manually:
 
 ```bash
 # Add to ~/.bashrc (or ~/.zshrc on macOS):
@@ -146,9 +146,21 @@ bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh disable   # paus
 bash ~/.claude/skills/wellness-coach/scripts/setup-scheduler.sh delete    # remove entirely
 ```
 
-### Configuring the interval
+### Configuration
 
-Both layers respect the `WELLNESS_INTERVAL` env var (minutes, default `60`):
+All settings can be customized in `~/.claude/wellness-config.sh` (created by the installer):
+
+```bash
+# ~/.claude/wellness-config.sh — uncomment any line to override
+WELLNESS_INTERVAL=45                    # minutes between notifications (default: 60)
+WELLNESS_CATEGORY_POOL="breathing breathing stretch-home presence eyes"  # weighted tip categories
+WELLNESS_FALLBACK_VIDEO="https://..."   # fallback video URL
+WELLNESS_TASK_NAME="WellnessCoach"      # Windows Task Scheduler name
+```
+
+Changes take effect immediately — no reinstall needed (except for cron interval, which requires re-running the installer or manually updating your crontab).
+
+You can also set `WELLNESS_INTERVAL` as an environment variable:
 
 ```bash
 export WELLNESS_INTERVAL=45  # tips every 45 minutes
