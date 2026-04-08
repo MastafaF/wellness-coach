@@ -59,12 +59,17 @@ random_index=$(( RANDOM % pool_size ))
 category="${category_pool[$random_index]}"
 
 # ── 4. Pick a random tip from that category ──────────────────────────────────
-# Read all lines matching [category] from tips.md
-mapfile -t candidates < <(grep -E "^\[${category}\]" "$LEARNING_TIPS" 2>/dev/null || true)
+# Read all lines matching [category] from tips.md (compatible with bash 3.2+)
+candidates=()
+while IFS= read -r line; do
+  candidates+=("$line")
+done < <(grep -E "^\[${category}\]" "$LEARNING_TIPS" 2>/dev/null || true)
 
 # Fallback: pick any tip if category had no matches
 if [[ ${#candidates[@]} -eq 0 ]]; then
-  mapfile -t candidates < <(grep -E "^\[[a-z-]+\]" "$LEARNING_TIPS" 2>/dev/null || true)
+  while IFS= read -r line; do
+    candidates+=("$line")
+  done < <(grep -E "^\[[a-z-]+\]" "$LEARNING_TIPS" 2>/dev/null || true)
 fi
 
 if [[ ${#candidates[@]} -eq 0 ]]; then
@@ -80,7 +85,10 @@ tip_text="${raw_tip#\[*\] }"
 # ── 5. Pick a focus video URL ────────────────────────────────────────────────
 focus_url=""
 if [[ -f "$LEARNING_FOCUS_VIDEOS" ]]; then
-  mapfile -t all_urls < <(grep -E "^https?://" "$LEARNING_FOCUS_VIDEOS" 2>/dev/null || true)
+  all_urls=()
+  while IFS= read -r line; do
+    all_urls+=("$line")
+  done < <(grep -E "^https?://" "$LEARNING_FOCUS_VIDEOS" 2>/dev/null || true)
   if [[ ${#all_urls[@]} -gt 0 ]]; then
     url_index=$(( RANDOM % ${#all_urls[@]} ))
     focus_url="${all_urls[$url_index]}"
