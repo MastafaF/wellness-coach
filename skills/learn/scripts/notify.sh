@@ -114,7 +114,7 @@ OS="$(uname -s 2>/dev/null || echo unknown)"
 case "$OS" in
   Darwin)
     # macOS — use osascript (built-in, no install required)
-    osa_msg=$(echo "$tip_text" | sed "s/'/\\\\'/" | cut -c1-200)
+    osa_msg=$(echo "$tip_text" | sed "s/'/\\\\'/g; s/\"/\\\\\"/g")
     osascript -e "display notification \"${osa_msg}\" with title \"Did You Know?\"" 2>/dev/null || true
     # If a focus URL is available, offer it via a second notification
     if [[ -n "$focus_url" ]]; then
