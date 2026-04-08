@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Your personal learning coach across Deen, History, Space, and Tech. Run to get a quick fact via OS notification, or use `/learn update` to change your profile, `/learn focus` to open a learning video, `/learn log` to track learning habits, or `/learn notifications` to manage background notifications.
+description: Your personal learning coach across Deen, History, and Space. Run to get a quick fact via OS notification, or use `/learn update` to change your profile, `/learn focus` to open a learning video, `/learn log` to track learning habits, or `/learn notifications` to manage background notifications.
 allowed-tools: Read, Write, Bash
 ---
 
@@ -154,8 +154,7 @@ Warmly introduce yourself in one sentence, then present all 4 questions at once 
 **1. Topics you want to learn about**
 1. Deen (Islam) — Quran, Hadith, Duas, Seerah
 2. History — Ancient civilizations, Modern history, World events
-3. Space — Solar system, Cosmos, Space exploration
-4. Tech — JavaScript, Python, Git, Linux, Web
+3. Space — SpaceX, Starlink, NASA, Moon, Rockets, Solar system, Cosmos
 
 **2. Depth preference**
 1. Quick facts / "did you know" nuggets
@@ -173,9 +172,8 @@ Warmly introduce yourself in one sentence, then present all 4 questions at once 
 1. Daily knowledge enrichment
 2. Build a stronger foundation in my faith
 3. Impress people with cool facts
-4. Become a better developer
-5. Prepare for conversations / debates
-6. Pure curiosity — surprise me
+4. Prepare for conversations / debates
+5. Pure curiosity — surprise me
 
 *Example reply: Q1: 1 3 / Q2: 4 / Q3: 2 / Q4: 1 6*
 
@@ -194,7 +192,15 @@ If the update request mentions habits or tracking (e.g. adding/removing tracked 
 ## Step 5: The Learning Session (If profile EXISTS and no update requested)
 If the profile exists, read it carefully. Then generate and deliver a learning nugget via OS notification:
 
-1. **Generate a fact**: Come up with a fascinating, accurate Space fact (solar system, cosmos, astronomy, space exploration). Keep it to 4–5 sentences max. Make it something surprising or lesser-known — avoid overly common facts. Vary the subtopic each time.
+1. **Generate a fact**: Come up with a fascinating, accurate Space fact. Keep it to 4–5 sentences max. Make it something surprising or lesser-known — avoid overly common facts. Pick randomly from these subtopics and vary each time:
+   - **SpaceX**: Starship, Falcon 9, Raptor engines, landing boosters, Mars plans, recent launches
+   - **Starlink**: satellite constellation, laser links, coverage milestones, orbital mechanics
+   - **NASA**: Artemis program, James Webb telescope, Voyager missions, Mars rovers, ISS
+   - **Moon**: Apollo missions, lunar geology, Artemis landing plans, water ice discovery, future bases
+   - **Rockets & engineering**: how engines work, staging, reusability, propellant types, delta-v
+   - **Solar system**: planets, moons, asteroids, comets, dwarf planets
+   - **Cosmos**: black holes, neutron stars, galaxies, dark matter, exoplanets
+   - **Space history**: Sputnik, Gagarin, Apollo 11, Hubble, Challenger, Columbia
 2. **Send it as an OS notification** by running this Bash command (replace `<FACT>` with your generated text, escaping single quotes):
    ```bash
    osascript -e 'display notification "<FACT>" with title "Did You Know?"'

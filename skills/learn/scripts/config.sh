@@ -19,7 +19,7 @@ LEARNING_INTERVAL="${LEARNING_INTERVAL:-60}"
 # ── Category weights ─────────────────────────────────────────────────────
 # Weighted pool: repeat a category name to increase its probability.
 # Equal weight across all 4 topics (Deen, History, Space, Tech) by default.
-LEARNING_CATEGORY_POOL="${LEARNING_CATEGORY_POOL:-quran hadith dua seerah ancient modern civilizations solar-system cosmos exploration javascript python git linux}"
+LEARNING_CATEGORY_POOL="${LEARNING_CATEGORY_POOL:-quran hadith dua seerah ancient modern civilizations solar-system cosmos exploration spacex starlink nasa moon rockets}"
 
 # ── Windows Task Scheduler ───────────────────────────────────────────────
 LEARNING_TASK_NAME="${LEARNING_TASK_NAME:-LearningCoach}"

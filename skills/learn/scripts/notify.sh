@@ -48,8 +48,7 @@ if [[ -f "$LEARNING_PROFILE" ]]; then
   extra=()
   grep -q "quran\|salah\|islam\|deen" <<< "$profile_text"          && extra+=(quran hadith dua seerah)
   grep -q "history\|ancient\|civilization" <<< "$profile_text"      && extra+=(ancient modern civilizations)
-  grep -q "space\|astronomy\|nasa\|cosmos" <<< "$profile_text"      && extra+=(solar-system cosmos exploration)
-  grep -q "javascript\|python\|coding\|tech" <<< "$profile_text"    && extra+=(javascript python git linux)
+  grep -q "space\|astronomy\|nasa\|cosmos" <<< "$profile_text"      && extra+=(solar-system cosmos exploration spacex starlink nasa moon rockets)
   category_pool+=("${extra[@]}")
 fi
 

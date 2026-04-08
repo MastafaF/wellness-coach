@@ -54,22 +54,29 @@
 [exploration] Voyager 1 launched in 1977 is now over 24 billion km away — the farthest human-made object from Earth, still sending data.
 [exploration] The ISS orbits Earth every 90 minutes at 28,000 km/h. Astronauts see 16 sunrises and sunsets every day.
 
-## javascript
+## spacex
 
-[javascript] Optional chaining (?.) short-circuits to undefined instead of throwing when a property is missing. Works on methods too: obj.fn?.()
-[javascript] Array.at(-1) gives you the last element. No more arr[arr.length - 1]. Works on strings too: "hello".at(-1) === "o".
+[spacex] Starship is the tallest and most powerful rocket ever built — 121 meters tall with 33 Raptor engines generating 74 MN of thrust at liftoff.
+[spacex] SpaceX lands Falcon 9 boosters on drone ships at sea. Over 300 successful landings, making rockets reusable for the first time in history.
+[spacex] Raptor engines use a full-flow staged combustion cycle — both fuel and oxidizer are fully gasified before entering the combustion chamber.
 
-## python
+## starlink
 
-[python] The walrus operator := lets you assign inside expressions: if (n := len(data)) > 10: saves a line and a lookup.
-[python] f-strings support = for debugging: x = 42; print(f"{x=}") outputs "x=42". Added in Python 3.8.
+[starlink] Starlink satellites use laser links to bounce data between satellites in orbit, reducing latency for remote and ocean coverage.
+[starlink] Over 6,000 Starlink satellites orbit Earth, making it the largest satellite constellation ever deployed.
 
-## git
+## nasa
 
-[git] git reflog is your safety net. Every HEAD movement is logged for 90 days — even after a hard reset.
-[git] git stash push -m "name" lets you label stashes. Much easier to find later than the default "WIP on branch" message.
+[nasa] The James Webb Space Telescope orbits the Sun at L2, 1.5 million km from Earth. Its mirror is 6.5m wide and sees infrared light from the first galaxies.
+[nasa] Voyager 1 launched in 1977 is now over 24 billion km away — the farthest human-made object, still sending data back to Earth.
+[nasa] The Artemis program aims to land the first woman and first person of color on the Moon, using Orion and a SpaceX Starship lunar lander.
 
-## linux
+## moon
 
-[linux] Ctrl+R in bash does reverse-search through history. Type a fragment and it finds the last matching command.
-[linux] The pipe | was invented by Doug McIlroy in 1973. It's the core of the Unix philosophy: do one thing well, chain together.
+[moon] Apollo 17 in 1972 was the last crewed Moon mission. No human has been beyond low Earth orbit since — over 50 years ago.
+[moon] NASA confirmed water ice exists in permanently shadowed craters at the Moon's south pole. Future bases could mine it for drinking water and rocket fuel.
+
+## rockets
+
+[rockets] Rocket staging works because dropping empty tanks mid-flight means less mass to accelerate — each stage gets a better thrust-to-weight ratio.
+[rockets] The Tsiolkovsky rocket equation shows that most of a rocket's mass must be propellant. A typical rocket is ~90% fuel by weight at launch.
