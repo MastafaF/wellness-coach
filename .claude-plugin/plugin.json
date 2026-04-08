@@ -1,11 +1,11 @@
 {
-  "name": "wellness-coach",
-  "version": "1.1.0",
-  "description": "Your personal coding and wellness coach. Get tailored break suggestions, stretches, and mental resets timed to your work goals and physical needs.",
+  "name": "learning-coach",
+  "version": "2.0.0",
+  "description": "Your personal learning coach. Get bite-sized knowledge across Deen, History, Space, and Tech — delivered as OS notifications.",
   "author": {
     "name": "MastafaF",
     "url": "https://github.com/MastafaF"
   },
   "homepage": "https://github.com/MastafaF/wellness-coach",
-  "tags": ["wellness", "productivity", "health", "breaks", "stretching", "mindfulness", "notifications", "habit-tracking"]
+  "tags": ["learning", "deen", "islam", "history", "space", "tech", "notifications", "habit-tracking"]
 }

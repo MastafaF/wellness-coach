@@ -1,4 +1,4 @@
-# notify.ps1 — Wellness Coach Layer 2: Windows toast notification
+# notify.ps1 — Learning Coach Layer 2: Windows toast notification
 # Called by Task Scheduler every 60 minutes.
 # Runs notify.sh --toast-only to check interval + pick a tip, then shows a Windows toast.
 
@@ -27,7 +27,7 @@ if (-not $bash) {
 }
 
 # ── 2. Run notify.sh --toast-only and capture tip output ─────────────────────
-$notifyScript = "$env:USERPROFILE\.claude\skills\wellness-coach\scripts\notify.sh"
+$notifyScript = "$env:USERPROFILE\.claude\skills\learning-coach\scripts\notify.sh"
 # Convert Windows path to Unix path for bash
 $unixScript = $notifyScript -replace '\\', '/' -replace '^([A-Za-z]):', { '/' + $args[0].Groups[1].Value.ToLower() }
 
@@ -52,7 +52,7 @@ if ([string]::IsNullOrWhiteSpace($tipText)) {
 $focusVideosFile = Join-Path (Split-Path $PSScriptRoot) "focus-videos.md"
 # Read fallback URL from config.sh, or use built-in default
 $unixInstallDir = $PSScriptRoot -replace '\\', '/' -replace '^([A-Za-z]):', { '/' + $args[0].Groups[1].Value.ToLower() }
-$focusUrl = try { & $bash -c "source '$unixInstallDir/config.sh' && echo `$WELLNESS_FALLBACK_VIDEO" 2>$null } catch { $null }
+$focusUrl = try { & $bash -c "source '$unixInstallDir/config.sh' && echo `$LEARNING_FALLBACK_VIDEO" 2>$null } catch { $null }
 if ([string]::IsNullOrWhiteSpace($focusUrl)) { $focusUrl = "https://www.youtube.com/watch?v=bSkzWpcWz-o" }
 
 if (Test-Path $focusVideosFile) {
@@ -73,12 +73,12 @@ $toastXml = @"
 <toast scenario="reminder">
   <visual>
     <binding template="ToastGeneric">
-      <text>Wellness check-in</text>
+      <text>Did You Know?</text>
       <text>$([System.Security.SecurityElement]::Escape($tipText))</text>
     </binding>
   </visual>
   <actions>
-    <action content="Open focus video" arguments="$focusUrl" activationType="protocol"/>
+    <action content="Watch & learn" arguments="$focusUrl" activationType="protocol"/>
     <action content="Dismiss" arguments="dismiss" activationType="system"/>
   </actions>
 </toast>
