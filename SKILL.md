@@ -192,9 +192,12 @@ If the update request mentions habits or tracking (e.g. adding/removing tracked 
   Confirm the habit list change to the user.
 
 ## Step 5: The Learning Session (If profile EXISTS and no update requested)
-If the profile exists, read it carefully. Then deliver a learning nugget via OS notification:
+If the profile exists, read it carefully. Then generate and deliver a learning nugget via OS notification:
 
-1. Run `bash ~/.claude/skills/learning-coach/scripts/notify.sh --force` to fire the OS notification with a random tip tailored to the user's profile.
-2. Respond with only this one line:
-   > "Sent a learning nugget to your notifications. Run `/learn focus` for a video, or `/loop 1h learn` for auto tips."
-3. Do NOT output the tip text in your response — the OS notification handles delivery. This keeps the output short and avoids the need to expand collapsed views.
+1. **Generate a fact**: Come up with a fascinating, accurate Space fact (solar system, cosmos, astronomy, space exploration). Keep it to 4–5 sentences max. Make it something surprising or lesser-known — avoid overly common facts. Vary the subtopic each time.
+2. **Send it as an OS notification** by running this Bash command (replace `<FACT>` with your generated text, escaping single quotes):
+   ```bash
+   osascript -e 'display notification "<FACT>" with title "Did You Know?"'
+   ```
+3. **Also print the same fact** to the terminal output so the user can read it inline too. Keep it short — just the fact, no extra commentary.
+4. Do NOT add long preambles, follow-up suggestions, or multi-paragraph responses. The output should be the fact and nothing else.
