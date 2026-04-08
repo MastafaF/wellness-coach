@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Your personal learning coach across Deen, History, and Space. Run to get a quick fact via OS notification, or use `/learn update` to change your profile, `/learn focus` to open a learning video, `/learn log` to track learning habits, or `/learn notifications` to manage background notifications.
+description: Your personal learning coach across Deen, History, and Space. Run `/learn --space`, `/learn --deen`, or `/learn --history` to get a fact on a specific topic (or just `/learn` for a random one). Also supports `/learn update`, `/learn focus`, `/learn log`, and `/learn notifications`.
 allowed-tools: Read, Write, Bash
 ---
 
@@ -190,17 +190,42 @@ If the update request mentions habits or tracking (e.g. adding/removing tracked 
   Confirm the habit list change to the user.
 
 ## Step 5: The Learning Session (If profile EXISTS and no update requested)
-If the profile exists, read it carefully. Then generate and deliver a learning nugget via OS notification:
+If the profile exists, read it carefully. Then determine the topic and deliver a learning nugget.
 
-1. **Generate a fact**: Come up with a fascinating, accurate Space fact. Keep it to 4–5 sentences max. Make it something surprising or lesser-known — avoid overly common facts. Pick randomly from these subtopics and vary each time:
-   - **SpaceX**: Starship, Falcon 9, Raptor engines, landing boosters, Mars plans, recent launches
-   - **Starlink**: satellite constellation, laser links, coverage milestones, orbital mechanics
-   - **NASA**: Artemis program, James Webb telescope, Voyager missions, Mars rovers, ISS
-   - **Moon**: Apollo missions, lunar geology, Artemis landing plans, water ice discovery, future bases
-   - **Rockets & engineering**: how engines work, staging, reusability, propellant types, delta-v
-   - **Solar system**: planets, moons, asteroids, comets, dwarf planets
-   - **Cosmos**: black holes, neutron stars, galaxies, dark matter, exoplanets
-   - **Space history**: Sputnik, Gagarin, Apollo 11, Hubble, Challenger, Columbia
+### Determine the topic
+Check `$ARGUMENTS` for a topic flag:
+- `--space` → Space
+- `--deen` → Deen (Islam)
+- `--history` → History
+
+If no flag is provided, pick a random topic from the user's profile interests. If the profile has no topic preference, pick randomly from all three.
+
+### Generate and deliver
+
+1. **Generate a fact** based on the chosen topic. Keep it to 4–5 sentences max. Make it something surprising or lesser-known — avoid overly common facts. Vary the subtopic each time.
+
+   **Space** subtopics:
+   - SpaceX: Starship, Falcon 9, Raptor engines, landing boosters, Mars plans, recent launches
+   - Starlink: satellite constellation, laser links, coverage milestones, orbital mechanics
+   - NASA: Artemis program, James Webb telescope, Voyager missions, Mars rovers, ISS
+   - Moon: Apollo missions, lunar geology, Artemis landing plans, water ice discovery, future bases
+   - Rockets & engineering: how engines work, staging, reusability, propellant types, delta-v
+   - Solar system: planets, moons, asteroids, comets, dwarf planets
+   - Cosmos: black holes, neutron stars, galaxies, dark matter, exoplanets
+   - Space history: Sputnik, Gagarin, Apollo 11, Hubble, Challenger, Columbia
+
+   **Deen (Islam)** subtopics:
+   - Quran: ayah insights, tafsir gems, surah virtues
+   - Hadith: Prophet's (PBUH) sayings, wisdom, daily sunnah
+   - Dua: supplications for different occasions
+   - Seerah: events from the Prophet's life, companions, key battles
+
+   **History** subtopics:
+   - Ancient: Egypt, Greece, Rome, Mesopotamia, China
+   - Islamic Golden Age: scholars, inventions, House of Wisdom
+   - Modern: world wars, revolutions, turning points
+   - Civilizations: rise and fall, trade routes, cultural exchange
+
 2. **Send it as an OS notification** by running this Bash command (replace `<FACT>` with your generated text, escaping single quotes):
    ```bash
    osascript -e 'display notification "<FACT>" with title "Did You Know?"'
